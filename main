@@ -1,0 +1,57 @@
+import numpy as np
+import matplotlib.pyplot as plt
+def indeks(indeks_studenta):
+    return indeks_studenta % 100, int(indeks_studenta/1000)
+def dane1(t, T1, T2, D):
+    nmaksimum=10000
+    u = np.zeros(11)
+    x = np.linspace(0, 1, 11)
+    for n in range(1, nmaksimum + 1):
+        if n % 2 == 0:
+            u = u + 1/n * np.exp(- n**2 * np.pi**2 * D * t) * np.sin(n * np.pi * x)
+        else:
+            u = u - 1/n * np.exp(- n**2 * np.pi**2 * D * t) * np.sin(n * np.pi * x)
+    u = u * 2 * (T2 - T1) / np.pi
+    u += (T2 - T1) * x + T1
+    return u
+def main():
+    b = 10**-4 # tolerancja
+    indeks_studenta = 180946
+    D = 0.00001
+    h = 0.1  # skok przestrzenny
+    k = h ** 2 / (2 * D)  # skok czasowy
+    wartosc1 = indeks(indeks_studenta)[0]
+    wartosc2 = indeks(indeks_studenta)[1]
+    dane = [[wartosc1 for i in range(10)] + [wartosc2]]
+    j = 0
+    blad = 1
+    while(blad > b):
+        temp = [wartosc1]
+        for i in range(1, 10):
+            temp.append((dane[j][i + 1] + dane[j][i - 1])/2)
+        temp.append(wartosc2)
+        dane.append(temp)
+        j += 1
+        blad = 0
+        for i in range(11):
+            blad += abs((dane[j][i]-dane[j-1][i]) / dane[j][i])
+        blad /= 11
+
+
+    ax = plt.axes(projection='3d')
+    X, Y = np.meshgrid(list(x * h for x in range(11)), list(t * k for t in range(j + 1)))
+    ax.scatter(X, Y, dane)
+    koncep= np.zeros((11, j + 1))
+    for i in range(j + 1):
+        koncep[:, i] = dane1(i * k, wartosc1, wartosc2, D)
+    koncep = np.transpose(koncep)
+    ax.scatter(X, Y, koncep)
+    plt.show()
+
+
+    np.savetxt('wyniki', dane, fmt='%10.5f')
+    np.savetxt('wyniki', dane, fmt='%10.5f', delimiter='\t')
+
+
+if __name__ == '__main__':
+    main()
